@@ -139,6 +139,49 @@
   }
   .tl-connector.flight{ border-left-style:dashed; }
   .tl-connector.visited{ border-left-color:var(--teal-line); }
+  .tl-connector.fork{ border-left-style:dotted; border-left-color:#b9b6ac; min-height:14px; }
+
+  .tl-fork{
+    margin:0 0 22px 50px;
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+  }
+  .fork-caption{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:2px;
+  }
+  .fork-option{
+    border-radius:9px;
+    padding:10px 13px;
+    border:1px solid;
+  }
+  .fork-a{ background:var(--amber-soft); border-color:var(--amber-line); }
+  .fork-b{ background:#eceaf9; border-color:#c4bdf0; }
+  .fork-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:13px;
+  }
+  .fork-a .fork-title{ color:var(--amber); }
+  .fork-b .fork-title{ color:#5a4bc4; }
+  .fork-desc{
+    font-size:12px;
+    color:#514f49;
+    margin-top:3px;
+    line-height:1.4;
+  }
+  .fork-step{
+    font-size:11.5px;
+    color:#5a4bc4;
+    margin-top:6px;
+    padding-top:6px;
+    border-top:1px dashed #c4bdf0;
+  }
 
   .tl-content{
     flex:1;
@@ -267,10 +310,9 @@
 <div class="app">
   <header>
     <div>
-      <div class="eyebrow">Маршрутный лист · перегон авто</div>
+      <div class="eyebrow">Маршрутный лист</div>
       <h1>Южно-Сахалинск → Кавминводы → Москва</h1>
     </div>
-    <div class="route-line">16–22 <b>июля 2026</b> · рейс <b>SU&nbsp;1747</b> / <b>SU&nbsp;1314</b><br>бронь <b>VVZL9G</b> · 10 точек маршрута</div>
     <div class="odometer">
       <div>
         <div class="odo-digits" id="odoDigits">0<span>/10</span></div>
@@ -283,91 +325,99 @@
   <main id="timeline"></main>
 
   <footer>
-    <p>Отметки сохраняются в этом браузере автоматически.</p>
-    <button class="reset-btn" id="resetBtn">Сбросить прогресс</button>
+    <p>Отметки о пройденных точках обновляются вручную — просто напиши в чат Claude, когда точка пройдена.</p>
   </footer>
 </div>
 
 <script>
-const STORAGE_KEY = 'pajero-route-progress-v1';
-
 const stops = [
   {
     id:1, name:'Южно-Сахалинск', sub:'Аэропорт · вылет',
     date:'16 июля, 16:00',
-    desc:'Вылет рейсом SU 1747 в Москву (Шереметьево). В пути 8 ч 55 мин.'
+    desc:'Вылет рейсом SU 1747 в Москву (Шереметьево). В пути 8 ч 55 мин.',
+    visited:false
   },
   {
     id:2, name:'Москва (Шереметьево)', sub:'Пересадка',
     date:'16 июля, 16:55 → 19:35',
-    desc:'Стыковка 2 ч 40 мин без смены терминала. Вылет рейсом SU 1314 в Минеральные Воды.'
+    desc:'Стыковка 2 ч 40 мин без смены терминала. Вылет рейсом SU 1314 в Минеральные Воды.',
+    visited:false
   },
   {
     id:3, name:'Минеральные Воды', sub:'Аэропорт · прилёт',
     date:'16 июля, 22:35',
-    desc:'Прилёт на Кавказ. Дальше — трансфер до Ессентуков.'
+    desc:'Прилёт на Кавказ. Дальше — трансфер до Ессентуков.',
+    visited:false
   },
   {
     id:4, name:'Ессентуки, ул. Шмидта, 94', sub:'Заселение',
     date:'16 июля, ≈23:30',
-    desc:'Заселение на ночь перед завтрашней регистрацией в ГИБДД.'
+    desc:'Заселение на ночь перед завтрашней регистрацией в ГИБДД.',
+    visited:false
   },
   {
     id:5, name:'Ессентуки, ул. Баучидзе, 23', sub:'ОГИБДД · оформление',
     date:'17 июля, 9:00',
-    desc:'Регистрация ТС.'
+    desc:'Регистрация ТС.',
+    visited:false
   },
   {
     id:6, name:'Минеральные Воды', sub:'Погрузка на автовоз',
     date:'17–18 июля',
-    desc:'Передача автомобиля перевозчику для доставки в Московскую область.'
+    desc:'Передача автомобиля перевозчику для доставки в Московскую область.',
+    visited:false
   },
   {
     id:7, name:'Минеральные Воды', sub:'Аэропорт · вылет',
     date:'19 июля',
-    desc:'Обратный вылет в Москву.'
+    desc:'Обратный вылет в Москву.',
+    visited:false
   },
   {
     id:8, name:'Москва, Красный Строитель', sub:'Заселение',
-    date:'19–20 июля',
-    desc:'Заселение, ожидание автовоза с автомобилем.'
+    date:'19 июля, вечером',
+    desc:'Днём прилетаем из Минеральных Вод, гуляем по Москве, вечером — заселение на Красном Строителе.',
+    visited:false
   },
   {
     id:9, name:'Симферопольское шоссе, 3Б', sub:'Встреча автовоза',
     date:'20–21 июля',
-    desc:'Встреча автомобиля после доставки автовозом из Минеральных Вод.'
+    desc:'Если автовоз приходит в первой половине дня и машину выдают до обеда — едем сразу на Люторецкий терминал. Если ближе к вечеру — едем ночевать в Чехов, а на терминал — утром следующего дня.',
+    visited:false
   },
   {
-    id:10, name:'Симферопольское шоссе, 3Б', sub:'Терминал «Интермодал Логистикс Плюс»',
-    date:'21–22 июля',
-    desc:'Сдача автомобиля в терминал для контейнерной ж/д отправки на Сахалин.'
+    id:10, name:'Люторецкий терминал', sub:'«Интермодал Логистикс Плюс»',
+    date:'21 июля вечером — или 22 июля утром',
+    desc:'Сдача автомобиля в терминал для контейнерной ж/д отправки на Сахалин.',
+    visited:false
   }
 ];
 
-// connector AFTER stops[i] (true = flight/dashed, false = ground/solid)
-const connectorAfter = [true, true, false, false, false, true, false, false, false, null];
+// connector AFTER stops[i] (true = flight/dashed, false = ground/solid, null = none/fork)
+const connectorAfter = [true, true, false, false, false, true, false, false, 'fork', null];
 
-function loadProgress(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+const NOTES_KEY = 'pajero-route-notes-v1';
+function loadNotes(){
+  try{ return JSON.parse(localStorage.getItem(NOTES_KEY)) || {}; }
   catch(e){ return {}; }
 }
-function saveProgress(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
-let progress = loadProgress();
+function saveNotes(n){ localStorage.setItem(NOTES_KEY, JSON.stringify(n)); }
+let notes = loadNotes();
 
 const timelineEl = document.getElementById('timeline');
 
 function render(){
   timelineEl.innerHTML = '';
   stops.forEach((stop, i)=>{
-    const rec = progress[stop.id] || {};
-    const visited = !!rec.visited;
+    const visited = !!stop.visited;
 
     const row = document.createElement('div');
     row.className = 'tl-row' + (visited ? ' visited' : '');
     row.dataset.id = stop.id;
 
-    const connector = connectorAfter[i] !== null
-      ? `<div class="tl-connector ${connectorAfter[i] ? 'flight' : ''} ${visited ? 'visited' : ''}"></div>`
+    const connType = connectorAfter[i];
+    const connector = connType !== null
+      ? `<div class="tl-connector ${connType === true ? 'flight' : ''} ${connType === 'fork' ? 'fork' : ''} ${visited ? 'visited' : ''}"></div>`
       : '';
 
     row.innerHTML = `
@@ -385,35 +435,37 @@ function render(){
             <div class="tl-date">${stop.date}</div>
           </div>
           <div class="tl-desc">${stop.desc}</div>
-          <textarea class="tl-note" rows="1" placeholder="Заметка на точке (необязательно)…">${rec.note || ''}</textarea>
-          <div class="tl-actions">
-            <button class="mark-btn">${visited ? 'Снять отметку' : 'Мы на точке'}</button>
-            ${visited && rec.timestamp ? `<span class="visited-stamp">✓ отмечено ${rec.timestamp}</span>` : ''}
-          </div>
+          <textarea class="tl-note" rows="1" placeholder="Заметка на точке (необязательно)…">${notes[stop.id] || ''}</textarea>
+          ${visited ? `<div class="tl-actions"><span class="visited-stamp">✓ пройдено</span></div>` : ''}
         </div>
       </div>
     `;
 
-    row.querySelector('.mark-btn').addEventListener('click', ()=> toggleVisited(stop.id));
     row.querySelector('.tl-note').addEventListener('change', (e)=>{
-      progress[stop.id] = progress[stop.id] || {};
-      progress[stop.id].note = e.target.value;
-      saveProgress(progress);
+      notes[stop.id] = e.target.value;
+      saveNotes(notes);
     });
 
     timelineEl.appendChild(row);
-  });
-}
 
-function toggleVisited(id){
-  const now = new Date();
-  const stamp = now.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}) + ' ' + now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
-  progress[id] = progress[id] || {};
-  progress[id].visited = !progress[id].visited;
-  progress[id].timestamp = progress[id].visited ? stamp : null;
-  saveProgress(progress);
-  render();
-  updateOdometer();
+    if(stop.id === 9){
+      const fork = document.createElement('div');
+      fork.className = 'tl-fork';
+      fork.innerHTML = `
+        <div class="fork-caption">Дальше — 2 варианта, смотря когда придёт автовоз</div>
+        <div class="fork-option fork-a">
+          <div class="fork-title">Вариант A · выдали до обеда</div>
+          <div class="fork-desc">Едем сразу на Люторецкий терминал в тот же день.</div>
+        </div>
+        <div class="fork-option fork-b">
+          <div class="fork-title">Вариант B · автовоз вечером</div>
+          <div class="fork-desc">Едем ночевать в Чехов.</div>
+          <div class="fork-step">↓ утром следующего дня — на Люторецкий терминал</div>
+        </div>
+      `;
+      timelineEl.appendChild(fork);
+    }
+  });
 }
 
 const odoTicks = document.getElementById('odoTicks');
@@ -424,19 +476,10 @@ stops.forEach(()=>{
 });
 
 function updateOdometer(){
-  const visitedCount = stops.filter(s => progress[s.id] && progress[s.id].visited).length;
+  const visitedCount = stops.filter(s => s.visited).length;
   document.getElementById('odoDigits').innerHTML = `${visitedCount}<span>/${stops.length}</span>`;
   document.querySelectorAll('.odo-tick').forEach((t,i)=> t.classList.toggle('on', i < visitedCount));
 }
-
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  if(confirm('Сбросить все отметки о прохождении точек?')){
-    progress = {};
-    saveProgress(progress);
-    render();
-    updateOdometer();
-  }
-});
 
 render();
 updateOdometer();
