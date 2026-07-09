@@ -203,10 +203,13 @@
   }
   .tl-head{
     display:flex;
-    align-items:baseline;
+    align-items:flex-start;
     justify-content:space-between;
     gap:10px;
-    flex-wrap:wrap;
+  }
+  .tl-head > div:first-child{
+    flex:1;
+    min-width:0;
   }
   .tl-name{
     font-family:'Space Grotesk', sans-serif;
@@ -224,6 +227,7 @@
     font-size:11px;
     color:var(--text-dim);
     white-space:nowrap;
+    flex-shrink:0;
   }
   .tl-desc{
     font-size:13px;
@@ -347,13 +351,13 @@ const stops = [
   },
   {
     id:4, name:'Ессентуки, ул. Шмидта, 94', sub:'Заселение',
-    date:'16 июля, ≈23.30',
+    date:'16 июля, ≈23:30',
     desc:'Заселение на ночь перед завтрашней регистрацией в ГИБДД.',
     visited:false
   },
   {
     id:5, name:'Ессентуки, ул. Баучидзе, 23', sub:'ОГИБДД · оформление',
-    date:'17 июля, 9.00',
+    date:'17 июля, 9:00',
     desc:'Регистрация ТС.',
     visited:false
   },
