@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Маршрутный лист · Pajero-2026</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -27,8 +26,8 @@
   ::selection{background:var(--amber);color:#1a1a1a;}
 
   .app{
-    display:grid;
-    grid-template-rows:auto 1fr;
+    display:flex;
+    flex-direction:column;
     min-height:100vh;
   }
 
@@ -95,29 +94,108 @@
   .odo-tick.on{ background:var(--teal); border-color:var(--teal); box-shadow:0 0 8px rgba(69,214,192,.5);}
   .odo-label{font-family:'JetBrains Mono', monospace; font-size:10px; color:var(--text-dim); letter-spacing:.1em; text-transform:uppercase;}
 
-  /* ---------- MAIN LAYOUT ---------- */
-  main{
-    display:grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap:1px;
-    background:var(--line);
-    flex:1;
-    min-height:0;
-  }
-  #map{
+  /* ---------- TIMELINE ---------- */
+  .timeline-wrap{
     background:var(--panel);
-    min-height:420px;
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:28px 24px 22px;
   }
-  .leaflet-container{background:#171b23 !important; font-family:'Inter',sans-serif;}
-
-  .panel{
-    background:var(--bg);
-    overflow-y:auto;
-    max-height:calc(100vh - 96px);
-    padding:16px;
+  .timeline{
+    display:flex;
+    align-items:flex-start;
+    min-width:max-content;
+    padding:0 60px;
+  }
+  .tl-item{
+    position:relative;
+    width:150px;
+    flex-shrink:0;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    align-items:center;
+    cursor:pointer;
+  }
+  .tl-item:not(:first-child)::before{
+    content:'';
+    position:absolute;
+    left:-50%;
+    top:57px;
+    width:100%;
+    height:0;
+    border-top:2px solid var(--amber-dim);
+    z-index:0;
+  }
+  .tl-item.tl-flight:not(:first-child)::before{
+    border-top:2px dashed #4a5064;
+  }
+  .tl-item.visited:not(:first-child)::before{
+    border-top-color:var(--teal-dim);
+  }
+  .tl-item.tl-flight.visited:not(:first-child)::before{
+    border-top-color:var(--teal-dim);
+  }
+  .tl-label{
+    height:54px;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    align-items:center;
+    text-align:center;
+    margin-bottom:10px;
+    padding:0 4px;
+  }
+  .tl-name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    line-height:1.25;
+  }
+  .tl-sub{
+    font-size:10.5px;
+    color:var(--text-dim);
+    margin-top:2px;
+    line-height:1.2;
+  }
+  .tl-dot{
+    position:relative;
+    z-index:1;
+    width:34px; height:34px;
+    border-radius:50%;
+    background:var(--panel-2);
+    border:2px solid var(--amber);
+    color:var(--amber);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700; font-size:13px;
+    transition:.2s;
+  }
+  .tl-item:hover .tl-dot{ transform:scale(1.08); }
+  .tl-item.visited .tl-dot{
+    border-color:var(--teal);
+    color:var(--teal);
+    background:var(--teal-dim);
+    box-shadow:0 0 10px rgba(69,214,192,.35);
+  }
+  .tl-item.active .tl-dot{ box-shadow:0 0 0 4px rgba(255,138,61,.25); }
+  .tl-date{
+    margin-top:10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:var(--text-dim);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  /* ---------- CARDS PANEL ---------- */
+  .panel{
+    flex:1;
+    padding:18px 24px 28px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));
+    gap:12px;
+    align-content:start;
   }
 
   .stop-card{
@@ -131,7 +209,7 @@
     cursor:pointer;
     transition:border-color .2s, transform .15s;
   }
-  .stop-card:hover{border-color:#3a4258; transform:translateX(2px);}
+  .stop-card:hover{border-color:#3a4258; transform:translateY(-2px);}
   .stop-card.visited{border-color:var(--teal-dim); background:linear-gradient(180deg, rgba(69,214,192,.06), transparent 40%), var(--panel);}
   .stop-card.active{border-color:var(--amber);}
 
@@ -176,7 +254,7 @@
   .stop-note::placeholder{color:#5a6274;}
   .stop-note:focus{outline:none; border-color:var(--amber-dim);}
 
-  .stop-actions{display:flex; align-items:center; gap:10px;}
+  .stop-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
   .mark-btn{
     font-family:'JetBrains Mono', monospace;
     font-size:11.5px;
@@ -227,33 +305,11 @@
   }
   .reset-btn:hover{border-color:var(--red); color:var(--red);}
 
-  .leaflet-popup-content-wrapper{
-    background:var(--panel); color:var(--text); border-radius:8px;
-    font-family:'Inter',sans-serif; border:1px solid var(--line);
-  }
-  .leaflet-popup-tip{background:var(--panel);}
-  .popup-title{font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px; margin-bottom:2px;}
-  .popup-date{font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--amber); margin-bottom:4px;}
-  .popup-desc{font-size:12.5px; color:#c3c8d3;}
-
-  .div-marker{
-    display:flex; align-items:center; justify-content:center;
-    width:30px; height:30px;
-    border-radius:50%;
-    background:var(--panel);
-    border:2px solid var(--amber);
-    color:var(--amber);
-    font-family:'JetBrains Mono', monospace;
-    font-weight:700; font-size:12px;
-    box-shadow:0 2px 8px rgba(0,0,0,.5);
-  }
-  .div-marker.visited{ border-color:var(--teal); color:var(--teal); background:var(--teal-dim);}
-
   @media (max-width: 860px){
-    main{grid-template-columns:1fr; grid-template-rows:340px 1fr;}
-    .panel{max-height:none;}
     header{padding:16px;}
     h1{font-size:20px;}
+    .panel{grid-template-columns:1fr; padding:14px;}
+    .timeline-wrap{padding:20px 16px;}
   }
 </style>
 </head>
@@ -262,22 +318,23 @@
   <header>
     <div class="h-left">
       <div class="eyebrow">Маршрутный лист · перегон авто</div>
-      <h1>Южно-Сахалинск → Кавминводы → Чехов</h1>
+      <h1>Южно-Сахалинск → Кавминводы → Москва</h1>
       <div class="route-line">16–22 <b>июля 2026</b> · рейс <b>SU&nbsp;1747</b> / <b>SU&nbsp;1314</b> · бронь <b>VVZL9G</b> · 10 точек маршрута</div>
     </div>
     <div class="odometer">
       <div>
-        <div class="odo-digits" id="odoDigits">0<span>/9</span></div>
+        <div class="odo-digits" id="odoDigits">0<span>/10</span></div>
         <div class="odo-label">точек пройдено</div>
       </div>
       <div class="odo-ticks" id="odoTicks"></div>
     </div>
   </header>
 
-  <main>
-    <div id="map"></div>
-    <div class="panel" id="panel"></div>
-  </main>
+  <div class="timeline-wrap">
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <div class="panel" id="panel"></div>
 
   <footer>
     <p>Отметки сохраняются в этом браузере автоматически. Открывайте страницу на том же устройстве, чтобы видеть прогресс.</p>
@@ -285,7 +342,6 @@
   </footer>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const STORAGE_KEY = 'pajero-route-progress-v1';
 
@@ -294,129 +350,97 @@ const stops = [
     id:1, type:'flight',
     name:'Южно-Сахалинск', sub:'Аэропорт · вылет',
     date:'16 июля, 16:00',
-    desc:'Вылет рейсом SU 1747 в Москву (Шереметьево). В пути 8 ч 55 мин.',
-    lat:46.9591, lng:142.7178
+    desc:'Вылет рейсом SU 1747 в Москву (Шереметьево). В пути 8 ч 55 мин.'
   },
   {
     id:2, type:'flight',
     name:'Москва (Шереметьево)', sub:'Пересадка',
     date:'16 июля, 16:55 → 19:35',
-    desc:'Стыковка 2 ч 40 мин без смены терминала. Вылет рейсом SU 1314 в Минеральные Воды.',
-    lat:55.9726, lng:37.4146
+    desc:'Стыковка 2 ч 40 мин без смены терминала. Вылет рейсом SU 1314 в Минеральные Воды.'
   },
   {
     id:3, type:'flight',
     name:'Минеральные Воды', sub:'Аэропорт · прилёт',
     date:'16 июля, 22:35',
-    desc:'Прилёт на Кавказ. Дальше — трансфер до Ессентуков.',
-    lat:44.2251, lng:43.0819
+    desc:'Прилёт на Кавказ. Дальше — трансфер до Ессентуков.'
   },
   {
     id:4, type:'stay',
     name:'Ессентуки, ул. Шмидта, 94', sub:'Заселение',
     date:'16 июля, ≈23:30',
-    desc:'Заселение на ночь перед завтрашней регистрацией в ГИБДД.',
-    lat:44.0453, lng:42.8578
+    desc:'Заселение на ночь перед завтрашней регистрацией в ГИБДД.'
   },
   {
     id:5, type:'task',
-    name:'Ессентуки, ул. Баучидзе, 23', sub:'ОГИБДД',
+    name:'Ессентуки, ул. Баучидзе, 23', sub:'ОГИБДД · оформление',
     date:'17 июля, 9:00',
-    desc:'Регистрация ТС.',
-    lat:44.0470, lng:42.8610
+    desc:'Регистрация ТС.'
   },
   {
     id:6, type:'task',
     name:'Минеральные Воды', sub:'Погрузка на автовоз',
-    date:'17 июля (вторая половина) – 18 июля',
-    desc:'Передача автомобиля перевозчику для доставки в Московскую область.',
-    lat:44.2019, lng:43.1367
+    date:'17–18 июля',
+    desc:'Передача автомобиля перевозчику для доставки в Московскую область.'
   },
   {
     id:7, type:'flight',
     name:'Минеральные Воды', sub:'Аэропорт · вылет',
     date:'19 июля',
-    desc:'Обратный вылет в Москву.',
-    lat:44.2261, lng:43.0829
+    desc:'Обратный вылет в Москву.'
   },
   {
     id:8, type:'stay',
     name:'Москва, Красный Строитель', sub:'Заселение',
     date:'19–20 июля',
-    desc:'Заселение, ожидание автовоза с автомобилем.',
-    lat:55.5980, lng:37.5910
+    desc:'Заселение, ожидание автовоза с автомобилем.'
   },
   {
     id:9, type:'task',
     name:'Симферопольское шоссе, 3Б', sub:'Встреча автовоза',
     date:'20–21 июля',
-    desc:'Встреча автомобиля после доставки автовозом из Минеральных Вод.',
-    lat:55.5670, lng:37.5670
+    desc:'Встреча автомобиля после доставки автовозом из Минеральных Вод.'
   },
   {
     id:10, type:'task',
     name:'Симферопольское шоссе, 3Б', sub:'Терминал «Интермодал Логистикс Плюс»',
     date:'21–22 июля',
-    desc:'Сдача автомобиля в терминал для контейнерной ж/д отправки на Сахалин.',
-    lat:55.5680, lng:37.5680
+    desc:'Сдача автомобиля в терминал для контейнерной ж/д отправки на Сахалин.'
   }
 ];
 
-// segments: [fromIndex, toIndex, isFlight]
-const segments = [[0,1,true],[1,2,true],[2,3,false],[3,4,false],[4,5,false],[5,6,true],[6,7,false],[7,8,false],[8,9,false]];
+// segments[i] describes the connector BEFORE stops[i] (i.e. between stops[i-1] and stops[i])
+// true = flight (dashed), false = ground (solid)
+const segments = [null, true, true, false, false, false, true, false, false, false];
 
 function loadProgress(){
-  try{
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-  }catch(e){ return {}; }
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch(e){ return {}; }
 }
-function saveProgress(p){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
-}
+function saveProgress(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }
 let progress = loadProgress();
 
-// ---------- MAP ----------
-const map = L.map('map', { zoomControl:true }).setView([48.5, 65], 3.2);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap &copy; CARTO',
-  maxZoom: 19
-}).addTo(map);
+// ---------- TIMELINE ----------
+const timelineEl = document.getElementById('timeline');
 
-const markers = [];
-
-function makeIcon(stop, visited){
-  return L.divIcon({
-    className:'',
-    html:`<div class="div-marker ${visited?'visited':''}">${stop.id}</div>`,
-    iconSize:[30,30],
-    iconAnchor:[15,15],
-    popupAnchor:[0,-14]
+function buildTimeline(){
+  timelineEl.innerHTML = '';
+  stops.forEach((stop, i)=>{
+    const visited = !!(progress[stop.id] && progress[stop.id].visited);
+    const item = document.createElement('div');
+    item.className = 'tl-item' + (visited ? ' visited' : '') + (segments[i] ? ' tl-flight' : '');
+    item.dataset.id = stop.id;
+    item.innerHTML = `
+      <div class="tl-label">
+        <div class="tl-name">${stop.name}</div>
+        <div class="tl-sub">${stop.sub}</div>
+      </div>
+      <div class="tl-dot">${stop.id}</div>
+      <div class="tl-date">${stop.date}</div>
+    `;
+    item.addEventListener('click', ()=> focusStop(stop.id));
+    timelineEl.appendChild(item);
   });
 }
-
-stops.forEach((stop, i)=>{
-  const visited = !!(progress[stop.id] && progress[stop.id].visited);
-  const marker = L.marker([stop.lat, stop.lng], { icon: makeIcon(stop, visited) }).addTo(map);
-  marker.bindPopup(
-    `<div class="popup-title">${stop.id}. ${stop.name}</div>
-     <div class="popup-date">${stop.date}</div>
-     <div class="popup-desc">${stop.desc}</div>`
-  );
-  marker.on('click', ()=> focusStop(stop.id));
-  markers.push(marker);
-});
-
-segments.forEach(([a,b,isFlight])=>{
-  L.polyline([[stops[a].lat, stops[a].lng],[stops[b].lat, stops[b].lng]], {
-    color: isFlight ? '#8a92a3' : '#ff8a3d',
-    weight: isFlight ? 1.6 : 2.2,
-    dashArray: isFlight ? '2 8' : null,
-    opacity: 0.85
-  }).addTo(map);
-});
-
-const bounds = L.latLngBounds(stops.map(s=>[s.lat,s.lng]));
-map.fitBounds(bounds, { padding:[40,40] });
 
 // ---------- PANEL ----------
 const panel = document.getElementById('panel');
@@ -470,22 +494,17 @@ function toggleVisited(id){
   progress[id].timestamp = progress[id].visited ? stamp : null;
   saveProgress(progress);
   renderPanel();
-  updateMarkers();
+  buildTimeline();
   updateOdometer();
 }
 
-function updateMarkers(){
-  stops.forEach((stop, i)=>{
-    const visited = !!(progress[stop.id] && progress[stop.id].visited);
-    markers[i].setIcon(makeIcon(stop, visited));
-  });
-}
-
 function focusStop(id){
-  const stop = stops.find(s=>s.id===id);
-  map.flyTo([stop.lat, stop.lng], 9, { duration: 0.7 });
-  const idx = stops.indexOf(stop);
-  markers[idx].openPopup();
+  document.querySelectorAll('.tl-item').forEach(el=>el.classList.remove('active'));
+  const tlItem = timelineEl.querySelector(`.tl-item[data-id="${id}"]`);
+  if(tlItem){
+    tlItem.classList.add('active');
+    tlItem.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+  }
   document.querySelectorAll('.stop-card').forEach(c=>c.classList.remove('active'));
   const card = panel.querySelector(`.stop-card[data-id="${id}"]`);
   if(card){ card.classList.add('active'); card.scrollIntoView({behavior:'smooth', block:'nearest'}); }
@@ -511,11 +530,12 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
     progress = {};
     saveProgress(progress);
     renderPanel();
-    updateMarkers();
+    buildTimeline();
     updateOdometer();
   }
 });
 
+buildTimeline();
 renderPanel();
 updateOdometer();
 </script>
