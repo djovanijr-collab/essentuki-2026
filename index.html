@@ -341,7 +341,7 @@
     </div>
     <div class="odometer">
       <div>
-        <div class="odo-digits" id="odoDigits">0<span>/10</span></div>
+        <div class="odo-digits" id="odoDigits">0<span>/11</span></div>
         <div class="odo-label">пройдено</div>
       </div>
       <div class="odo-ticks" id="odoTicks"></div>
@@ -403,20 +403,26 @@ const stops = [
   },
   {
     id:9, name:'Москва', sub:'п. Битца, Симферопольское шоссе, 3Б',
-    date:'19 июля (вс), вечером',
-    desc:'От станции Битца — пешком до стоянки автовоза. <a href="https://2gis.ru/moscow/directions/tab/pedestrian/points/37.6115%2C55.5711%3B70030076195138573%7C37.6055%2C55.5706%3B4504222397628650" target="_blank" rel="noopener">маршрут в 2ГИС</a><br><br>Автовоз приезжает в воскресенье вечером. Ночуем в Красном Строителе. <a href="https://2gis.ru/moscow/directions/points/37.605471%2C55.570555%3B4504222397628650%7C37.610743%2C55.586503%3B70030076344488950?m=37.614447%2C55.578297%2F14.91" target="_blank" rel="noopener">маршрут в 2ГИС</a><br><br>В понедельник утром — на Люторецкий терминал. <a href="https://2gis.ru/moscow/directions/tab/car/points/37.6108%2C55.5865%3B70000001059390088%7C37.5335%2C55.1113%3B70000001064667717" target="_blank" rel="noopener">маршрут в 2ГИС</a>',
-    visited:false, lat:55.5670, lon:37.5670, isoDate:'2026-07-19'
+    date:'20 июля, 01:00',
+    desc:'Автовоз пришёл на место разгрузки в час ночи. <a href="https://2gis.ru/moscow/directions/tab/pedestrian/points/37.6115%2C55.5711%3B70030076195138573%7C37.6055%2C55.5706%3B4504222397628650" target="_blank" rel="noopener">маршрут в 2ГИС</a>',
+    visited:true, lat:55.5670, lon:37.5670, isoDate:'2026-07-20'
   },
   {
     id:10, name:'Люторецкий терминал', sub:'«Интермодал Логистикс Плюс»',
-    date:'20 июля (пн), утро',
-    desc:'Сдача автомобиля в терминал для контейнерной ж/д отправки на Сахалин.',
-    visited:false, lat:55.5680, lon:37.5680, isoDate:'2026-07-20'
+    date:'20 июля, 8:30–10:30',
+    desc:'В 8:30 выехали в терминал, в 10:30 машину приняли и подписали договор. Сдача автомобиля для контейнерной ж/д отправки на Сахалин.',
+    visited:true, lat:55.5680, lon:37.5680, isoDate:'2026-07-20'
+  },
+  {
+    id:11, name:'Москва', sub:'Вылет домой',
+    date:'21 июля, 21:35',
+    desc:'Обратный вылет в Южно-Сахалинск.',
+    visited:false, lat:55.9726, lon:37.4146, isoDate:'2026-07-21'
   }
 ];
 
 // connector AFTER stops[i] (true = flight/dashed, false = ground/solid, null = none)
-const connectorAfter = [true, true, false, false, false, false, true, false, false, null];
+const connectorAfter = [true, true, false, false, false, false, true, false, false, true, null];
 
 const NOTES_KEY = 'pajero-route-notes-v1';
 function loadNotes(){
